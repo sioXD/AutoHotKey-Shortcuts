@@ -89,28 +89,58 @@ QuitApp(*){
     ExitApp()
 }
 
-ShowPopup(text) {
+ShowPopup(text, color:="FAE492", background:="2f4858", time:=3000) { 
+    if WinExist("ahk_class AutoHotkeyGUI") {
+        ; bestehendes Popup zerstören
+        WinKill("ahk_class AutoHotkeyGUI")
+    }
+
     Popup := Gui(, "Shortcuts")
-    Popup.Opt("+AlwaysOnTop -Caption +ToolWindow")
-    Popup.SetFont("s14 w500") ; Schriftgröße 10, dicke
-    Popup.Add("Text", "cacacac", text) 
-    Popup.BackColor := "5c035c"
-    ; Popup.OnEvent("Click", Popup.Destroy())
-    Popup.Show("AutoSize xCenter Y50")
+    Popup.Opt("+AlwaysOnTop -Caption +ToolWindow +E0x08000000")
+    Popup.SetFont("s15 w600", "Candara Code") ; Schriftgröße dicke , Font
+    Popup.Add("Text", "c" color, text) 
+    Popup.BackColor := background
+
+    ;! Popup.Show("NA AutoSize x0 y0")
+    Popup.Show("NA AutoSize xCenter yCenter")
+    Popup.GetPos(,, &w, &h)
+    MonitorGetWorkArea(MonitorGetPrimary(), &L, &T, &R, &B)
+    
+
+    ; Move to bottom-right corner
+    newX := R - w - 10  ; 10px margin from edge
+    newY := B - h - 10
+    ;! Popup.Move(newX, newY)
+
 
     ; custom Window mit Abgerundete Ecken
     Popup.GetPos(&x, &y, &w, &h)
     radius := 35  ; Radius in Pixeln
     region := DllCall("CreateRoundRectRgn", "Int", 0, "Int", 0, "Int", w, "Int", h, "Int", radius, "Int", radius, "Ptr")
     DllCall("SetWindowRgn", "Ptr", Popup.Hwnd, "Ptr", region, "Int", true)
+
+
    
     ; Destroy Popup with a Click
+    ; FIXME
     WM_LBUTTONDOWN := 0x0201
-    handler := (wParam, lParam, msg, hwnd) => (hwnd = Popup.Hwnd ? (Popup.Destroy(), 0) : 0)
+    handler(wParam, lParam, msg, hwnd) {
+        try {
+            if hwnd = Popup.Hwnd {
+                WinKill("ahk_class AutoHotkeyGUI")
+            }
+        } catch {
+            ; Fenster existiert nicht mehr, nichts tun
+            ToolTip("Popup closes soon")
+            SetTimer () => ToolTip(), -1500
+        }
+        return 0
+    }
+
     OnMessage(WM_LBUTTONDOWN, handler)
 
     try { ;if the Popup wasn't clicked
-        SetTimer(() => Popup.Destroy(), -3000)
+        SetTimer(() => Popup.Destroy(), -time)
     }
      
 }
@@ -146,8 +176,6 @@ configFile := A_ScriptDir "\shortcutsConfig.ini"
             }
         }
     }
-
-
 
 
 !1:: { ;Open VsCode for this folder
@@ -235,14 +263,16 @@ lastY := 0
     global LockTimerRunning, lastX, lastY
     LockTimerRunning := !LockTimerRunning
     if LockTimerRunning {
-        TrayTip "Shortcuts", "Maus-Überwachung AKTIV", "Iconi Mute"
-        SetTimer () => TrayTip(), -1000
+        ; TrayTip "Shortcuts", "Maus-Überwachung AKTIV", "Iconi Mute"
+        ; SetTimer () => TrayTip(), -1000
+        ShowPopup("Mouse-Detection ACTIVE", "001d2b", "6fae8a")
         MouseGetPos(&lastX, &lastY)
         SetTimer(CheckMouseMove, checkInterval)
     } else {
-        TrayTip "Shortcuts", "Maus-Überwachung INAKTIV", "Iconx Mute"
+        ; TrayTip "Shortcuts", "Maus-Überwachung INAKTIV", "Iconx Mute"
+        ; SetTimer () => TrayTip(), -1000
         SetTimer(CheckMouseMove, 0)
-        SetTimer () => TrayTip(), -1000
+        ShowPopup("Mouse-Detection INACTIVE", "001d2b", "be5845")
     }
     Sleep(800)
     ToolTip("")
@@ -262,16 +292,16 @@ TimerRunning := false
         TraySetIcon ".\favicon.ico", , 
         A_IconTip := ""
         SetTimer PressNumLock, 180000  ; 180.000 ms = 3 Minuten
-        TrayTip "Shortcuts", "Keep Alive started", "Iconi Mute"
-        ; ToolTip "Fn-Loop aktiviert (alle 5 Minuten)"
-        SetTimer () => TrayTip(), -3000  ; TrayTip nach 3 Sekunde ausblenden
+        ; TrayTip "Shortcuts", "Keep Alive started", "Iconi Mute"
+        ShowPopup("Keep Alive started", "001d2b", "039590", 1000)
+        ; SetTimer () => TrayTip(), -3000  ; TrayTip nach 3 Sekunde ausblenden
     } else {
         TraySetIcon ".\rocket.ico", , 1
-        A_IconTip := "Shortcuts"
-        SetTimer PressNumLock, 0  ; Timer stoppen
-        ; ToolTip "Fn-Loop deaktiviert"
-        TrayTip "Shortcuts", "Keep Alive stopped", "Iconx Mute"
-        SetTimer () => TrayTip(), -1000
+        A_IconTip := "Shortcuts" 
+        SetTimer PressNumLock, 0  ; Timer stoppen 
+        ; TrayTip "Shortcuts", "Keep Alive stopped", "Iconx Mute"
+        ; SetTimer () => TrayTip(), -1000
+        ShowPopup("Keep Alive stopped", "001d2b", "be5845", 1000)
     }
 
 }
