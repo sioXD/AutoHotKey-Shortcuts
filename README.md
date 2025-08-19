@@ -19,3 +19,6 @@ optional: have IntelliJ added to Path
 # Additional Fetures
 
 - Toggle Startup: when clicked on the TrayIcon => toggles the behavior of the script on startup
+
+> [!IMPORTANT]
+> Popups <b>only</b> work on monitors, not on Laptop Displays (I dont know why) (it makes no sense)
