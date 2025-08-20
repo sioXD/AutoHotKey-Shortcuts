@@ -2,9 +2,10 @@
 #SingleInstance
 Persistent ; kinda unnecessary, but it's good to have it (important for continuous activation)
 
-TraySetIcon ".\rocket.ico", , 1
+TraySetIcon ".\images\rocket.ico", , 1
 
 A_IconTip := "Shortcuts" ; Tooltip appears on hovering the tray icon.
+configFile := A_ScriptDir "\shortcutsConfig.ini" ; Config File
 
 ;?  Tipp: powershell kann mit: Run "pwsh" gestartet werden
 
@@ -22,6 +23,8 @@ Tray.Add("Welcome to Shortcuts!", WelcomeUI)
 Tray.Add() ; Trennlinie
 Tray.Add("Check Keeping Alive", CKA)
 Tray.Add("Toggle Startup", ToggleStartup)
+Tray.Add("Toggle AutoServerStart", ToggleAutoServerStart)
+Tray.Add("Change AutoServerStart Credentials", ChangeCredentials)
 Tray.Add()
 Tray.Add("Quit", QuitApp)
 
@@ -64,22 +67,48 @@ CKA(*) {
     else
         TrayTip "Shortcuts", "Keep Alive is not active", "Iconx Mute"
 }
+ToggleAutoServerStart(*){
+    if !FileExist(configFile) 
+        || !(AutoStartServer := IniRead(configFile, "Startup", "AutoServerStart", ""))
+        ||  (AutoStartServer := IniRead(configFile, "Startup", "AutoServerStart", "")) == false
+    {
+        IniWrite true, configFile, "Startup", "AutoServerStart"
+    } else {
+        IniWrite false, configFile, "Startup", "AutoServerStart"
+    }
+}
+
+ChangeCredentials(*){
+    url := InputBox("Browser URL eingeben:", "url").Value
+    username := InputBox("Benutzername eingeben:", "Login").Value
+    password := InputBox("Passwort eingeben:", "Login", "Password").Value ; Passwort-Eingabe maskiert
+
+    ; Speichern in einer INI-Datei
+    IniWrite url, configFile, "AutoServerStart", "url"
+    IniWrite username, configFile, "AutoServerStart", "Username"
+    IniWrite password, configFile, "AutoServerStart", "Password"
+
+}
+
+
+
 ToggleStartup(*){
     targetPath := A_Startup "\" StrReplace(A_ScriptName, ".ahk", ".lnk")
 
     if FileExist(targetPath) {
         ; Wenn schon im Autostart, dann entfernen
         FileDelete(targetPath)
+        IniWrite false, configFile, "Startup", "AutoStart"
         ; TrayTip "Shortcuts", "Autostart deaktiviert", "IconX Mute" 
         ShowPopup("Autostart deaktiviert")
-    }
-    else {
+    } else {
         ; Wenn noch nicht im Autostart, dann kopieren
         shell := ComObject("WScript.Shell")
         shortcut := shell.CreateShortcut(targetPath)
         shortcut.TargetPath := A_ScriptFullPath
         shortcut.WorkingDirectory := RegExReplace(A_ScriptFullPath, "\\[^\\]+$")
         shortcut.Save()
+        IniWrite true, configFile, "Startup", "AutoStart"
         ; TrayTip "Shortcuts", "Autostart aktiviert", "IconI Mute"
         ShowPopup("Autostart aktiviert")
     }
@@ -124,6 +153,7 @@ ShowPopup(text, color:="FAE492", background:="2f4858", time:=3000) {
     ; Destroy Popup with a Click
     ; FIXME
     WM_LBUTTONDOWN := 0x0201
+        ; handler := (wParam, lParam, msg, hwnd) => (hwnd = Popup.Hwnd ? (Popup.Destroy(), 0) : 0)
     handler(wParam, lParam, msg, hwnd) {
         try {
             if hwnd = Popup.Hwnd {
@@ -145,37 +175,43 @@ ShowPopup(text, color:="FAE492", background:="2f4858", time:=3000) {
      
 }
 
-configFile := A_ScriptDir "\shortcutsConfig.ini"
+; On StartUp
+; Prüfen, ob Konfigurationsdatei schon existiert
+if !FileExist(configFile) {
+    targetPath := A_Startup "\" StrReplace(A_ScriptName, ".ahk", ".lnk")
 
-    ; Prüfen, ob Konfigurationsdatei schon existiert
-    if !FileExist(configFile) {
-        targetPath := A_Startup "\" StrReplace(A_ScriptName, ".ahk", ".lnk")
-
-        shell := ComObject("WScript.Shell")
-        shortcut := shell.CreateShortcut(targetPath)
-        shortcut.TargetPath := A_ScriptFullPath
-        shortcut.WorkingDirectory := RegExReplace(A_ScriptFullPath, "\\[^\\]+$")
-        shortcut.Save()
-        ; TrayTip "Shortcuts", "Autostart aktiviert", "IconI Mute"
-        ShowPopup("Autostart aktiviert")
-        IniWrite true, configFile, "Startup", "AutoStart"
+    shell := ComObject("WScript.Shell")
+    shortcut := shell.CreateShortcut(targetPath)
+    shortcut.TargetPath := A_ScriptFullPath
+    shortcut.WorkingDirectory := RegExReplace(A_ScriptFullPath, "\\[^\\]+$")
+    shortcut.Save()
+    ; TrayTip "Shortcuts", "Autostart aktiviert", "IconI Mute"
+    ShowPopup("Autostart aktiviert")
+    IniWrite true, configFile, "Startup", "AutoStart"
+    
+} else {
+    try{
+        Startup := IniRead(configFile, "Startup", "AutoStart", "")
+        AutoStartServer := IniRead(configFile, "Startup", "AutoStartServer", "")
         
-    } else {
-        try{
-            Startup := IniRead(configFile, "Startup", "AutoStart", "")
-            
-            ; wird getoggelt, wenn: 0 und StartupFile da || 1 und StartupFile nicht da
-            targetPath := A_Startup "\" StrReplace(A_ScriptName, ".ahk", ".lnk")
-            if (FileExist(targetPath) && Startup == 0) || (!FileExist(targetPath) && Startup == 1) {
-                ToggleStartup()
-            }
-
-            if (Startup == "") {
-                ; ini existiert ist aber leer
-                IniWrite false, configFile, "Startup", "AutoStart"
-            }
+        ; wird getoggelt, wenn: 0 und StartupFile da || 1 und StartupFile nicht da
+        targetPath := A_Startup "\" StrReplace(A_ScriptName, ".ahk", ".lnk")
+        if (FileExist(targetPath) && Startup == 0) || (!FileExist(targetPath) && Startup == 1) {
+            ToggleStartup()
         }
+
+        if (Startup == "") {
+            ; ini existiert ist aber leer
+            IniWrite false, configFile, "Startup", "AutoStart"
+        }
+
+        if (AutoStartServer) {
+            Send "!8"
+        }
+
     }
+}
+
 
 
 !1:: { ;Open VsCode for this folder
@@ -253,6 +289,105 @@ configFile := A_ScriptDir "\shortcutsConfig.ini"
     }
 }
 
+; AutoLogin on Website
+ServerTimerRunning := false
+!8::{
+    global ServerTimerRunning
+    ServerTimerRunning := !ServerTimerRunning
+
+    ; More Beautiful
+    TraySetIcon ".\images\lens.ico", , 1
+    A_IconTip := "Lens Search"
+
+    ; get server
+    if !FileExist(configFile) 
+        || !(url := IniRead(configFile, "AutoServerStart", "url", "")) 
+        || !(username := IniRead(configFile, "AutoServerStart", "Username", "")) 
+        || !(password := IniRead(configFile, "AutoServerStart", "Password", "")) 
+    {
+        url := InputBox("Browser URL eingeben:", "url").Value
+        username := InputBox("Benutzername eingeben:", "Login").Value
+        password := InputBox("Passwort eingeben:", "Login", "Password").Value ; Passwort-Eingabe maskiert
+
+        ; Speichern in einer INI-Datei
+        IniWrite url, configFile, "AutoServerStart", "url"
+        IniWrite username, configFile, "AutoServerStart", "Username"
+        IniWrite password, configFile, "AutoServerStart", "Password"
+    } else {
+        ; Aus Datei lesen
+        url := IniRead(configFile, "AutoServerStart", "url", "")
+        username := IniRead(configFile, "AutoServerStart", "Username", "")
+        password := IniRead(configFile, "AutoServerStart", "Password", "")
+    }
+    ; domain bekommen
+    if RegExMatch(url, "^(?:https?:\/\/)?(?:[^@\/\n]+@)?(?:www\.)?([^:\/?\n]+)", &match) {
+        server := match[1]
+    } else {
+        MsgBox "Keine Domain gefunden. \nShortcut wird beendet."
+        ServerTimerRunning := false
+    }
+
+
+    if (ServerTimerRunning) {
+        while (ServerTimerRunning) {
+        ; Ping im Hintergrund
+        exitCode := RunWait(A_ComSpec " /c ping -n 1 " server " >nul", , "Hide")
+
+        if (exitCode = 0) {
+            ; Server erreichbar
+            Run url
+
+            Sleep 3000 ; Warten, bis Seite geladen ist
+
+            Send username   ; Benutzername eingeben
+            Send A_Tab      ; Zum Passwortfeld springen
+            Send password   ; Passwort eingeben
+            Send "{Enter}"  ; Formular absenden
+            
+            Sleep 1000
+
+            ; TODO for later
+/*             #Include lib\WebScrapping.ahk ; for DOM
+            scraper := WebScrapping()
+
+            scraper := WebScrapping("C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe")
+            Sleep(1000)
+
+            scraper.SetPageByURL(server)
+
+            winTitle := WinGetTitle("A")
+            MsgBox "Aktives Fenster: " winTitle
+
+            Loop {
+                el := scraper.GetElement("document.querySelector('.storeapp-list')")
+                if (el) {
+                    MsgBox "Login erfolgreich, storeapp-list gefunden!"
+                    break
+                }
+                Sleep 500
+            }
+ */
+
+
+            ServerTimerRunning := false
+            break
+        } else {
+            ; TrayTip "Lens Search", "keine Verbindung", "Icon! Mute"
+            ToolTip "searching"
+            SetTimer () => TrayTip(), -1000
+        
+    
+            Sleep(2000)
+            }
+        }
+    }
+    TraySetIcon ".\images\rocket.ico", , 1
+    A_IconTip := "Shortcuts" 
+}
+
+
+
+
 ; Setting for Mouse Detection
 LockTimerRunning := false
 checkInterval := 100       ; Prüfintervall in Millisekunden
@@ -289,14 +424,14 @@ TimerRunning := false
     TimerRunning := !TimerRunning  ; Toggle Zustand
 
     if (TimerRunning) {
-        TraySetIcon ".\favicon.ico", , 
+        TraySetIcon ".\images\favicon.ico", , 
         A_IconTip := ""
         SetTimer PressNumLock, 180000  ; 180.000 ms = 3 Minuten
         ; TrayTip "Shortcuts", "Keep Alive started", "Iconi Mute"
         ShowPopup("Keep Alive started", "001d2b", "039590", 1000)
         ; SetTimer () => TrayTip(), -3000  ; TrayTip nach 3 Sekunde ausblenden
     } else {
-        TraySetIcon ".\rocket.ico", , 1
+        TraySetIcon ".\images\rocket.ico", , 1
         A_IconTip := "Shortcuts" 
         SetTimer PressNumLock, 0  ; Timer stoppen 
         ; TrayTip "Shortcuts", "Keep Alive stopped", "Iconx Mute"

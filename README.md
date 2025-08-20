@@ -8,15 +8,16 @@ have VSCode added to Path (check with: `code -v`)
 
 optional: have IntelliJ added to Path
 
-# Hotkey:
+# Hotkeys:
 
 - `Alt` + `1` : Opens the AHK Script in VSCode
 - `Alt` + `2` : When in Explorer: Open VSCode for the current Folder
 - `Alt` + `3` : When in Explorer: Open IntelliJ for the current Folder
+- `Alt` + `8` : Automatic LogIn in a Website
 - `Alt` + `9` : Checks if the Mouse is moved, if so => locks the User (same as `WIN` + `L`)
 - `Alt` + `0` : Presses key's in random time intervals, so the display doesn't go out (The Keys are: `NumLock`, `Ctrl`, `Shift`, `ScrollLock`, )
 
-# Additional Fetures
+# Additional Features
 
 - Toggle Startup: when clicked on the TrayIcon => toggles the behavior of the script on startup
 
