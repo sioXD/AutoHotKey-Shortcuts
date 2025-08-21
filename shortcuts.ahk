@@ -295,9 +295,7 @@ ServerTimerRunning := false
     global ServerTimerRunning
     ServerTimerRunning := !ServerTimerRunning
 
-    ; More Beautiful
-    TraySetIcon ".\images\lens.ico", , 1
-    A_IconTip := "Lens Search"
+
 
     ; get server
     if !FileExist(configFile) 
@@ -329,60 +327,18 @@ ServerTimerRunning := false
 
 
     if (ServerTimerRunning) {
-        while (ServerTimerRunning) {
-        ; Ping im Hintergrund
-        exitCode := RunWait(A_ComSpec " /c ping -n 1 " server " >nul", , "Hide")
-
-        if (exitCode = 0) {
-            ; Server erreichbar
-            Run url
-
-            Sleep 3000 ; Warten, bis Seite geladen ist
-
-            Send username   ; Benutzername eingeben
-            Send A_Tab      ; Zum Passwortfeld springen
-            Send password   ; Passwort eingeben
-            Send "{Enter}"  ; Formular absenden
-            
-            Sleep 1000
-
-            ; TODO for later
-/*             #Include lib\WebScrapping.ahk ; for DOM
-            scraper := WebScrapping()
-
-            scraper := WebScrapping("C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe")
-            Sleep(1000)
-
-            scraper.SetPageByURL(server)
-
-            winTitle := WinGetTitle("A")
-            MsgBox "Aktives Fenster: " winTitle
-
-            Loop {
-                el := scraper.GetElement("document.querySelector('.storeapp-list')")
-                if (el) {
-                    MsgBox "Login erfolgreich, storeapp-list gefunden!"
-                    break
-                }
-                Sleep 500
-            }
- */
-
-
-            ServerTimerRunning := false
-            break
-        } else {
-            ; TrayTip "Lens Search", "keine Verbindung", "Icon! Mute"
-            ToolTip "searching"
-            SetTimer () => TrayTip(), -1000
-        
-    
-            Sleep(2000)
-            }
-        }
+        SetTimer(CheckServer(url, server, username, password), 3000)
+        ; More Beautiful
+        TraySetIcon ".\images\lens.ico", , 1
+        A_IconTip := "Lens Search"
+    } else {
+        SetTimer(CheckServer(url,server, username, password), 0)
+        TraySetIcon ".\images\rocket.ico", , 1
+        A_IconTip := "Shortcuts" 
     }
-    TraySetIcon ".\images\rocket.ico", , 1
-    A_IconTip := "Shortcuts" 
+    
+    
+
 }
 
 
@@ -409,8 +365,6 @@ lastY := 0
         SetTimer(CheckMouseMove, 0)
         ShowPopup("Mouse-Detection INACTIVE", "001d2b", "be5845")
     }
-    Sleep(800)
-    ToolTip("")
 }
 
 
@@ -438,6 +392,63 @@ TimerRunning := false
         ; SetTimer () => TrayTip(), -1000
         ShowPopup("Keep Alive stopped", "001d2b", "be5845", 1000)
     }
+
+}
+
+;Funktion for AutoServer Start
+CheckServer(url, server, username, password) {
+    global ServerTimerRunning
+     exitCode := RunWait(A_ComSpec " /c ping -n 1 " server " >nul", , "Hide")
+
+    if (exitCode = 0) {
+        ; Server erreichbar
+        Run url
+
+        Sleep 3000 ; Warten, bis Seite geladen ist
+
+        Send username   ; Benutzername eingeben
+        Send A_Tab      ; Zum Passwortfeld springen
+        Send password   ; Passwort eingeben
+        Send "{Enter}"  ; Formular absenden
+        
+        Sleep 1000
+
+        ; TODO for later
+/*             #Include lib\WebScrapping.ahk ; for DOM
+        scraper := WebScrapping()
+
+        scraper := WebScrapping("C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe")
+        Sleep(1000)
+
+        scraper.SetPageByURL(server)
+
+        winTitle := WinGetTitle("A")
+        MsgBox "Aktives Fenster: " winTitle
+
+        Loop {
+            el := scraper.GetElement("document.querySelector('.storeapp-list')")
+            if (el) {
+                MsgBox "Login erfolgreich, storeapp-list gefunden!"
+                break
+            }
+            Sleep 500
+        }
+*/
+
+
+        SetTimer(CheckServer(url,server, username, password), 0)
+        
+    } else {
+        ; TrayTip "Lens Search", "keine Verbindung", "Icon! Mute"
+        ToolTip "searching"
+        SetTimer () => TrayTip(), -1000
+    
+
+        Sleep(2000)
+    }
+        
+    
+
 
 }
 
