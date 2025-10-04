@@ -289,12 +289,50 @@ if !FileExist(configFile) {
     }
 }
 
+; Google Mouse Translation
+!4:: {
+    selectedText := GetSelectedText()
+    if !selectedText {
+        ToolTip "No text selected."
+        SetTimer () => ToolTip(), -3000
+        return
+    }
+
+    url := "https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q=" . selectedText
+
+    Http := ComObject("WinHttp.WinHttpRequest.5.1")
+    Http.Open("GET", url, false)
+    Http.Send()
+    if Http.Status = 200 {
+        response := Http.ResponseText
+        ; The response from Google Translate API is JSON-like
+        ; Example: [[[["Hello","Hola",,,1]],,"es",,,,]]
+        ; You might want to parse it properly or just extract the first translation:
+        translation := RegExReplace(response, '^\[\[\[\s*"([^"]+)".*$', "$1")
+        Send translation
+    } else {
+        ToolTip "HTTP request failed. Status: " Http.Status
+    }
+
+}
+
+
+GetSelectedText() {
+    oldClipboard := A_Clipboard
+    A_Clipboard := ""  ; Start off empty to allow ClipWait to detect when the text has arrived.
+    Send "^c"
+    ClipWait  
+    SelectedText := A_Clipboard   ; Get the copied text
+    A_Clipboard := oldClipboard
+    return SelectedText
+}
+
+
 ; AutoLogin on Website
 ServerTimerRunning := false
 !8::{
     global ServerTimerRunning
     ServerTimerRunning := !ServerTimerRunning
-
 
 
     ; get server
