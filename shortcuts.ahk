@@ -263,7 +263,7 @@ if !FileExist(configFile) {
     }
 }
 
-!3:: { ;Open IntelliJ in Ordner
+!3:: { ;Open NeoVim in Ordner
     if WinActive("ahk_exe explorer.exe") {
         Send "^l"
         Sleep 200
@@ -273,15 +273,8 @@ if !FileExist(configFile) {
         if WinWait("C:\WINDOWS\system32\cmd.exe", , 3) {
             WinActivate
 
-            Send "idea64.exe `"" A_Clipboard "`"{Enter}"
-            WinWait("ahk_exe idea64.exe", , 5)
-            loop { ; force kill
-                if WinExist("C:\WINDOWS\system32\cmd.exe") {
-                    WinKill "C:\WINDOWS\system32\cmd.exe"
-                    Sleep 100
-                } else
-                    break
-            }
+            Send "nvim `"" A_Clipboard "`"{Enter}"
+            
 
         } else {
             MsgBox "couldn't run the Program"
@@ -289,8 +282,30 @@ if !FileExist(configFile) {
     }
 }
 
+!4:: { ; git clone from Clipboard —e
+    if !WinActive("ahk_exe explorer.exe")
+        return
+
+    repo := A_Clipboard
+
+    Send "^l"
+    Sleep 200
+    Send "^c"
+    Sleep 100
+
+
+    cmd := A_ComSpec " /c git clone `"" repo "`""
+    exitCode := RunWait(cmd, A_Clipboard, "Hide") ; WorkingDir gesetzt
+
+    if (exitCode = 0) {
+        ShowPopup("git clone finished", "001d2b", "039590", 1500)
+    } else {
+        MsgBox("git clone failed. Exit code: " exitCode)
+    }
+}
+
 ; Google Mouse Translation
-!4:: {
+!5:: {
     selectedText := GetSelectedText()
     if !selectedText {
         ToolTip "No text selected."
