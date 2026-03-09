@@ -105,7 +105,10 @@ SettingsUI(*) {
     MyGui.Add("Text", "x20 y+20 w400", "--------------------------------------------------------")
 
     ;* Autostart toggle
-    targetPath := A_Startup "\" StrReplace(A_ScriptName, ".ahk", ".lnk")
+    nameNoExt := ""
+
+    SplitPath A_ScriptName, , , , &nameNoExt
+    targetPath := A_Startup "\" nameNoExt ".lnk"
 
     opt := "x20 y+10 w400"
     if FileExist(targetPath)
@@ -120,7 +123,7 @@ SettingsUI(*) {
     MyBtnClose := MyGui.Add("Button", "w100 x+20 yp", "Close")
     MyBtnClose.OnEvent("Click", CloseSettings)
 
-    MyGui.Show("w400 h500")
+    MyGui.Show("w400 h510")
 
     CloseSettings(*) {
         RegisterHotkeys()
@@ -151,7 +154,11 @@ SettingsUI(*) {
         IniWrite(HK_KeepAlive, configFile, "Hotkeys", "KeepAlive")
 
         ; Handle Autostart toggle if changed
-        targetPath := A_Startup "\" StrReplace(A_ScriptName, ".ahk", ".lnk")
+        nameNoExt := ""
+
+        SplitPath A_ScriptName, , , , &nameNoExt
+        targetPath := A_Startup "\" nameNoExt ".lnk"
+
         if (Saved.Chk_Autostart == 1 && !FileExist(targetPath)) || (Saved.Chk_Autostart == 0 && FileExist(targetPath)) {
             ToggleStartup()
         }
@@ -217,8 +224,10 @@ ChangeCredentials(*){
 
 
 ToggleStartup(*){
-    targetPath := A_Startup "\" StrReplace(A_ScriptName, ".ahk", ".lnk")
+    nameNoExt := ""
 
+    SplitPath A_ScriptName, , , , &nameNoExt
+    targetPath := A_Startup "\" nameNoExt ".lnk"
     if FileExist(targetPath) {
         ; Wenn schon im Autostart, dann entfernen
         FileDelete(targetPath)
@@ -301,7 +310,11 @@ ShowPopup(text, color:="FAE492", background:="2f4858", time:=3000) {
 ; On StartUp
 ; Prüfen, ob Konfigurationsdatei schon existiert
 if !FileExist(configFile) {
-    targetPath := A_Startup "\" StrReplace(A_ScriptName, ".ahk", ".lnk")
+    nameNoExt := ""
+
+    SplitPath A_ScriptName, , , , &nameNoExt
+    targetPath := A_Startup "\" nameNoExt ".lnk"
+
 
     shell := ComObject("WScript.Shell")
     shortcut := shell.CreateShortcut(targetPath)
@@ -318,7 +331,10 @@ if !FileExist(configFile) {
         AutoStartServer := IniRead(configFile, "Startup", "AutoStartServer", "")
         
         ; wird getoggelt, wenn: 0 und StartupFile da || 1 und StartupFile nicht da
-        targetPath := A_Startup "\" StrReplace(A_ScriptName, ".ahk", ".lnk")
+        nameNoExt := ""
+        SplitPath A_ScriptName, , , , &nameNoExt
+        targetPath := A_Startup "\" nameNoExt ".lnk"
+
         if (FileExist(targetPath) && Startup == 0) || (!FileExist(targetPath) && Startup == 1) {
             ToggleStartup()
         }
