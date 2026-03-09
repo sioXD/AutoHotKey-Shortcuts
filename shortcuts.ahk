@@ -7,6 +7,40 @@ TraySetIcon ".\images\rocket.ico", , 1
 A_IconTip := "Shortcuts" ; Tooltip appears on hovering the tray icon.
 configFile := A_ScriptDir "\shortcutsConfig.ini" ; Config File
 
+; Read Hotkeys
+global HK_CodeWorkspace := IniRead(configFile, "Hotkeys", "CodeWorkspace", "!1")
+global HK_CodeFolder := IniRead(configFile, "Hotkeys", "CodeFolder", "!2")
+global HK_NeoVimFolder := IniRead(configFile, "Hotkeys", "NeoVimFolder", "!3")
+global HK_GitClone := IniRead(configFile, "Hotkeys", "GitClone", "!4")
+global HK_WebSearch := IniRead(configFile, "Hotkeys", "WebSearch", "!7")
+global HK_AutoLogin := IniRead(configFile, "Hotkeys", "AutoLogin", "!8")
+global HK_MouseDetection := IniRead(configFile, "Hotkeys", "MouseDetection", "!9")
+global HK_KeepAlive := IniRead(configFile, "Hotkeys", "KeepAlive", "!0")
+
+RegisterHotkeys() {
+    global
+    try Hotkey HK_CodeWorkspace, Action_CodeWorkspace, "On"
+    try Hotkey HK_CodeFolder, Action_CodeFolder, "On"
+    try Hotkey HK_NeoVimFolder, Action_NeoVimFolder, "On"
+    try Hotkey HK_GitClone, Action_GitClone, "On"
+    try Hotkey HK_WebSearch, Action_WebSearch, "On"
+    try Hotkey HK_AutoLogin, Action_AutoLogin, "On"
+    try Hotkey HK_MouseDetection, Action_MouseDetection, "On"
+    try Hotkey HK_KeepAlive, Action_KeepAlive, "On"
+}
+UnregisterHotkeys() {
+    global
+    try Hotkey HK_CodeWorkspace, "Off"
+    try Hotkey HK_CodeFolder, "Off"
+    try Hotkey HK_NeoVimFolder, "Off"
+    try Hotkey HK_GitClone, "Off"
+    try Hotkey HK_WebSearch, "Off"
+    try Hotkey HK_AutoLogin, "Off"
+    try Hotkey HK_MouseDetection, "Off"
+    try Hotkey HK_KeepAlive, "Off"
+}
+RegisterHotkeys()
+
 ;?  Tipp: powershell kann mit: Run "pwsh" gestartet werden
 
 /*
@@ -20,6 +54,7 @@ configFile := A_ScriptDir "\shortcutsConfig.ini" ; Config File
 Tray := A_TrayMenu
 Tray.Delete() ; Vordefinierte Menüpunkte löschen.
 Tray.Add("Settings", SettingsUI)
+Tray.Add("Reset Hotkeys", ResetHotkeys)
 Tray.Add() ; Trennlinie
 Tray.Add("Check Keeping Alive", CKA)
 Tray.Add("Toggle Startup", ToggleStartup)
@@ -29,38 +64,127 @@ Tray.Add()
 Tray.Add("Quit", QuitApp)
 
 SettingsUI(*) {
+    global
+    UnregisterHotkeys() ; Disable hotkeys while editing
     MyGui := Gui(, "Settings")
+    MyGui.OnEvent("Close", (*) => RegisterHotkeys()) ; Re-enable if closed without saving
+    
     MyGui.BackColor := "White"
     MyGui.SetFont("s10", "Segoe UI")
-    
+
     MyGui.Add("Text", "w400 x20 y20", "Shortcuts - Settings:")
-    MyGui.Add("Text", "w400 x30 y+10", "Alt + 1 : Open VsCode for this folder")
-    MyGui.Add("Text", "w400 x30 y+5", "Alt + 2 : Open VsCode in Ordner")
-    MyGui.Add("Text", "w400 x30 y+5", "Alt + 3 : Open NeoVim in Ordner")
-    MyGui.Add("Text", "w400 x30 y+5", "Alt + 4 : git clone from Clipboard")
-    MyGui.Add("Text", "w400 x30 y+5", "Alt + 7 : Websearch with selected Text")
-    MyGui.Add("Text", "w400 x30 y+5", "Alt + 8 : AutoLogin on Website")
-    MyGui.Add("Text", "w400 x30 y+5", "Alt + 9 : Mouse Detection Toggle")
-    MyGui.Add("Text", "w400 x30 y+5", "Alt + 0 : Keep Alive Toggle")
     
+    MyGui.Add("Text", "x20 y+15 w200", "Open VsCode Workspace:")
+    MyGui.Add("Hotkey", "x+10 yp-3 w120 vHK_CodeWorkspace", HK_CodeWorkspace)
+    
+    MyGui.Add("Text", "x20 y+15 w200", "Open VsCode in Ordner:")
+    MyGui.Add("Hotkey", "x+10 yp-3 w120 vHK_CodeFolder", HK_CodeFolder)
+    
+    MyGui.Add("Text", "x20 y+15 w200", "Open NeoVim in Ordner:")
+    MyGui.Add("Hotkey", "x+10 yp-3 w120 vHK_NeoVimFolder", HK_NeoVimFolder)
+    
+    MyGui.Add("Text", "x20 y+15 w200", "git clone from Clipboard:")
+    MyGui.Add("Hotkey", "x+10 yp-3 w120 vHK_GitClone", HK_GitClone)
+    
+    MyGui.Add("Text", "x20 y+15 w200", "Websearch selected Text:")
+    MyGui.Add("Hotkey", "x+10 yp-3 w120 vHK_WebSearch", HK_WebSearch)
+    
+    MyGui.Add("Text", "x20 y+15 w200", "AutoLogin on Website:")
+    MyGui.Add("Hotkey", "x+10 yp-3 w120 vHK_AutoLogin", HK_AutoLogin)
+    
+    MyGui.Add("Text", "x20 y+15 w200", "Mouse Detection Toggle:")
+    MyGui.Add("Hotkey", "x+10 yp-3 w120 vHK_MouseDetection", HK_MouseDetection)
+    
+    MyGui.Add("Text", "x20 y+15 w200", "Keep Alive Toggle:")
+    MyGui.Add("Hotkey", "x+10 yp-3 w120 vHK_KeepAlive", HK_KeepAlive)
+    
+    MyGui.SetFont("s9 cGray")
+    MyGui.Add("Text", "x20 y+15 w200 Center", "<To Disable Press 'Space'>")
+    MyGui.SetFont("s10 cDefault")
+
     MyGui.Add("Text", "x20 y+20 w400", "--------------------------------------------------------")
-    
+
     ;* Autostart toggle
     targetPath := A_Startup "\" StrReplace(A_ScriptName, ".ahk", ".lnk")
-    
+
     opt := "x20 y+10 w400"
     if FileExist(targetPath)
         opt .= " Checked"
-    
-    chkAutostart := MyGui.Add("CheckBox", opt, " Enable Autostart on Boot")
-    chkAutostart.OnEvent("Click", (*) => ToggleStartup())
-    
-    
-    MyBtn := MyGui.Add("Button", "w100 x170 y+30 Default", "Close")
-    MyBtn.OnEvent("Click", (*) => MyGui.Destroy())
 
-    MyGui.Show("w440 h350")
+    chkAutostart := MyGui.Add("CheckBox", opt " vChk_Autostart", " Enable Autostart on Boot")
+
+
+    MyBtnSave := MyGui.Add("Button", "w100 x110 y+30 Default", "Save")
+    MyBtnSave.OnEvent("Click", SaveShortcuts)
+
+    MyBtnClose := MyGui.Add("Button", "w100 x+20 yp", "Close")
+    MyBtnClose.OnEvent("Click", CloseSettings)
+
+    MyGui.Show("w400 h500")
+
+    CloseSettings(*) {
+        RegisterHotkeys()
+        MyGui.Destroy()
+    }
+
+    SaveShortcuts(*) {
+        Saved := MyGui.Submit()
+
+        ; Apply new
+        HK_CodeWorkspace := Saved.HK_CodeWorkspace
+        HK_CodeFolder := Saved.HK_CodeFolder
+        HK_NeoVimFolder := Saved.HK_NeoVimFolder
+        HK_GitClone := Saved.HK_GitClone
+        HK_WebSearch := Saved.HK_WebSearch
+        HK_AutoLogin := Saved.HK_AutoLogin
+        HK_MouseDetection := Saved.HK_MouseDetection
+        HK_KeepAlive := Saved.HK_KeepAlive
+
+        ; Save to INI
+        IniWrite(HK_CodeWorkspace, configFile, "Hotkeys", "CodeWorkspace")
+        IniWrite(HK_CodeFolder, configFile, "Hotkeys", "CodeFolder")
+        IniWrite(HK_NeoVimFolder, configFile, "Hotkeys", "NeoVimFolder")
+        IniWrite(HK_GitClone, configFile, "Hotkeys", "GitClone")
+        IniWrite(HK_WebSearch, configFile, "Hotkeys", "WebSearch")
+        IniWrite(HK_AutoLogin, configFile, "Hotkeys", "AutoLogin")
+        IniWrite(HK_MouseDetection, configFile, "Hotkeys", "MouseDetection")
+        IniWrite(HK_KeepAlive, configFile, "Hotkeys", "KeepAlive")
+
+        ; Handle Autostart toggle if changed
+        targetPath := A_Startup "\" StrReplace(A_ScriptName, ".ahk", ".lnk")
+        if (Saved.Chk_Autostart == 1 && !FileExist(targetPath)) || (Saved.Chk_Autostart == 0 && FileExist(targetPath)) {
+            ToggleStartup()
+        }
+
+        RegisterHotkeys()
+        ShowPopup("Settings saved!", "001d2b", "039590", 1500)
+    }
 }
+
+ResetHotkeys(*) {
+    global
+    ; Turn off currently active hotkeys
+    UnregisterHotkeys()
+
+    ; Delete the Hotkeys config section
+    try IniDelete configFile, "Hotkeys"
+
+    ; Re-assign default hotkeys
+    HK_CodeWorkspace := "!1"
+    HK_CodeFolder := "!2"
+    HK_NeoVimFolder := "!3"
+    HK_GitClone := "!4"
+    HK_WebSearch := "!7"
+    HK_AutoLogin := "!8"
+    HK_MouseDetection := "!9"
+    HK_KeepAlive := "!0"
+
+    ; Re-register the defaults
+    RegisterHotkeys()
+    
+    ShowPopup("Hotkeys reset to default", "001d2b", "039590", 1500)
+}
+
 CKA(*) {
     if TimerRunning
         TrayTip "Shortcuts", "Keep Alive is active", "Iconi Mute"
@@ -213,7 +337,7 @@ if !FileExist(configFile) {
 
 
 
-!1:: { ;Open VsCode for this folder
+Action_CodeWorkspace(ThisHotkey) { ;Open VsCode for this folder
     Run "C:\WINDOWS\system32\cmd.exe"
     if WinWait("C:\WINDOWS\system32\cmd.exe", , 3) {
         WinActivate
@@ -235,7 +359,7 @@ if !FileExist(configFile) {
     }
 }
 
-!2:: { ;Open VsCode in Ordner
+Action_CodeFolder(ThisHotkey) { ;Open VsCode in Ordner
     if WinActive("ahk_exe explorer.exe") {
         Send "^l"
         Sleep 200
@@ -262,7 +386,7 @@ if !FileExist(configFile) {
     }
 }
 
-!3:: { ;Open NeoVim in Ordner
+Action_NeoVimFolder(ThisHotkey) { ;Open NeoVim in Ordner
     if WinActive("ahk_exe explorer.exe") {
         Send "^l"
         Sleep 200
@@ -281,7 +405,7 @@ if !FileExist(configFile) {
     }
 }
 
-!4:: { ; git clone from Clipboard —e
+Action_GitClone(ThisHotkey) { ; git clone from Clipboard —e
     if !WinActive("ahk_exe explorer.exe")
         return
 
@@ -305,7 +429,7 @@ if !FileExist(configFile) {
 
 
 ; Sebsearch with selected Text
-!7:: { 
+Action_WebSearch(ThisHotkey) {
    selectedText := GetSelectedText()
     if (selectedText)
         Run("https://www.google.com/search?q=" . selectedText)
@@ -316,7 +440,7 @@ if !FileExist(configFile) {
 
 ; AutoLogin on Website
 ServerTimerRunning := false
-!8::{
+Action_AutoLogin(ThisHotkey) {
     global ServerTimerRunning
     ServerTimerRunning := !ServerTimerRunning
 
@@ -374,7 +498,7 @@ checkInterval := 100       ; Prüfintervall in Millisekunden
 lastX := 0
 lastY := 0
 
-!9:: {
+Action_MouseDetection(ThisHotkey) {
     global LockTimerRunning, lastX, lastY
     LockTimerRunning := !LockTimerRunning
     if LockTimerRunning {
@@ -396,7 +520,7 @@ lastY := 0
 
 TimerRunning := false
 
-!0:: { ; Keep Alive
+Action_KeepAlive(ThisHotkey) { ; Keep Alive
 
     global TimerRunning
     TimerRunning := !TimerRunning  ; Toggle Zustand
