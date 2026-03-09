@@ -15,6 +15,8 @@ optional: have IntelliJ added to Path
 - `Alt` + `1` : Opens the AHK Script in VSCode
 - `Alt` + `2` : When in Explorer: Open VSCode for the current Folder
 - `Alt` + `3` : When in Explorer: Open IntelliJ for the current Folder
+- `Alt` + `4` : `git clone` from Clipboard
+- `Alt` + `7` : Websearch with selected Text
 - `Alt` + `8` : Automatic LogIn in a Website
 - `Alt` + `9` : Checks if the Mouse is moved, if so => locks the User (same as `WIN` + `L`)
 - `Alt` + `0` : Presses key's in random time intervals, so the display doesn't go out (The Keys are: `NumLock`, `Ctrl`, `Shift`, `ScrollLock`, )

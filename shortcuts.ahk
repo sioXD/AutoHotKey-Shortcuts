@@ -38,6 +38,7 @@ SettingsUI(*) {
     MyGui.Add("Text", "w400 x30 y+5", "Alt + 2 : Open VsCode in Ordner")
     MyGui.Add("Text", "w400 x30 y+5", "Alt + 3 : Open NeoVim in Ordner")
     MyGui.Add("Text", "w400 x30 y+5", "Alt + 4 : git clone from Clipboard")
+    MyGui.Add("Text", "w400 x30 y+5", "Alt + 7 : Websearch with selected Text")
     MyGui.Add("Text", "w400 x30 y+5", "Alt + 8 : AutoLogin on Website")
     MyGui.Add("Text", "w400 x30 y+5", "Alt + 9 : Mouse Detection Toggle")
     MyGui.Add("Text", "w400 x30 y+5", "Alt + 0 : Keep Alive Toggle")
@@ -303,6 +304,16 @@ if !FileExist(configFile) {
 }
 
 
+; Sebsearch with selected Text
+!7:: { 
+   selectedText := GetSelectedText()
+    if (selectedText)
+        Run("https://www.google.com/search?q=" . selectedText)
+
+}
+
+
+
 ; AutoLogin on Website
 ServerTimerRunning := false
 !8::{
@@ -406,6 +417,16 @@ TimerRunning := false
         ShowPopup("Keep Alive stopped", "001d2b", "be5845", 1000)
     }
 
+}
+
+
+GetSelectedText() {
+    ClipSaved := ClipboardAll()
+    A_Clipboard := ""
+    SendEvent "^c"
+    SelectedText := A_Clipboard
+    A_Clipboard := ClipSaved
+    return SelectedText
 }
 
 ;Funktion for AutoServer Start
