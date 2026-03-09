@@ -2,6 +2,8 @@
 
 Multiple Shortcuts for better Productivity: Keep Display On, Lock Display when Mouse is moved, Open VSCode in a Folder, Automatic Launch
 
+![Setting UI Screenshot](images/Screenshot_Settings_UI.png)
+
 ## Requirements
 
 make sure you have AutoHotKey 2 installed, which you can get here: <https://www.autohotkey.com/v2>
