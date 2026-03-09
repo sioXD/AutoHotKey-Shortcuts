@@ -19,7 +19,7 @@ configFile := A_ScriptDir "\shortcutsConfig.ini" ; Config File
 ; MENU
 Tray := A_TrayMenu
 Tray.Delete() ; Vordefinierte Menüpunkte löschen.
-Tray.Add("Welcome to Shortcuts!", WelcomeUI)
+Tray.Add("Settings", SettingsUI)
 Tray.Add() ; Trennlinie
 Tray.Add("Check Keeping Alive", CKA)
 Tray.Add("Toggle Startup", ToggleStartup)
@@ -28,38 +28,37 @@ Tray.Add("Change AutoServerStart Credentials", ChangeCredentials)
 Tray.Add()
 Tray.Add("Quit", QuitApp)
 
-WelcomeUI(*) {
-    MyGui := Gui()
+SettingsUI(*) {
+    MyGui := Gui(, "Settings")
     MyGui.BackColor := "White"
-    MyGui.Add("Picture", "x0 y0 h350 w450", A_WinDir "\Web\Wallpaper\Windows\img0.jpg")
-    MyBtn := MyGui.Add("Button", "Default xp+20 yp+250", "Start the Deletion")
-    MyBtn.OnEvent("Click", MoveBar)
-    MyProgress := MyGui.Add("Progress", "w416")
-    MyText := MyGui.Add("Text", "wp")  ; wp means "use width of previous".
-    MyGui.Show()
+    MyGui.SetFont("s10", "Segoe UI")
+    
+    MyGui.Add("Text", "w400 x20 y20", "Shortcuts - Settings:")
+    MyGui.Add("Text", "w400 x30 y+10", "Alt + 1 : Open VsCode for this folder")
+    MyGui.Add("Text", "w400 x30 y+5", "Alt + 2 : Open VsCode in Ordner")
+    MyGui.Add("Text", "w400 x30 y+5", "Alt + 3 : Open NeoVim in Ordner")
+    MyGui.Add("Text", "w400 x30 y+5", "Alt + 4 : git clone from Clipboard")
+    MyGui.Add("Text", "w400 x30 y+5", "Alt + 8 : AutoLogin on Website")
+    MyGui.Add("Text", "w400 x30 y+5", "Alt + 9 : Mouse Detection Toggle")
+    MyGui.Add("Text", "w400 x30 y+5", "Alt + 0 : Keep Alive Toggle")
+    
+    MyGui.Add("Text", "x20 y+20 w400", "--------------------------------------------------------")
+    
+    ;* Autostart toggle
+    targetPath := A_Startup "\" StrReplace(A_ScriptName, ".ahk", ".lnk")
+    
+    opt := "x20 y+10 w400"
+    if FileExist(targetPath)
+        opt .= " Checked"
+    
+    chkAutostart := MyGui.Add("CheckBox", opt, " Enable Autostart on Boot")
+    chkAutostart.OnEvent("Click", (*) => ToggleStartup())
+    
+    
+    MyBtn := MyGui.Add("Button", "w100 x170 y+30 Default", "Close")
+    MyBtn.OnEvent("Click", (*) => MyGui.Destroy())
 
-    MoveBar(*)
-    {
-        Loop Files, A_WinDir "\*.*", "R"
-        {
-            if (A_Index > 100)
-                break
-            MyProgress.Value := A_Index
-            MyText.Value := A_LoopFileName
-            Sleep 50
-        }
-        MyText.Value := "Deletion complete."
-    }
-    MyGui.OnEvent("Close", CloseUI)
-    CloseUI(*) {
-        
-        MsgBox("Welcome to Shortcuts, a small program for helping with everyday tasks.")
-        MsgBox("All Shortcuts have all Keybinds: Press 'Alt' and a number")
-        TrayTip "Shortcuts", "Thank you for using Shortcuts", "Icon Mute"
-    }
-
-
-
+    MyGui.Show("w440 h350")
 }
 CKA(*) {
     if TimerRunning
@@ -119,12 +118,12 @@ QuitApp(*){
 }
 
 ShowPopup(text, color:="FAE492", background:="2f4858", time:=3000) { 
-    if WinExist("ahk_class AutoHotkeyGUI") {
+    if WinExist("ShortcutsPopup ahk_class AutoHotkeyGUI") {
         ; bestehendes Popup zerstören
-        WinKill("ahk_class AutoHotkeyGUI")
+        WinKill("ShortcutsPopup ahk_class AutoHotkeyGUI")
     }
 
-    Popup := Gui(, "Shortcuts")
+    Popup := Gui("-Caption", "ShortcutsPopup")
     Popup.Opt("+AlwaysOnTop -Caption +ToolWindow +E0x08000000")
     Popup.SetFont("s15 w600", "Candara Code") ; Schriftgröße dicke , Font
     Popup.Add("Text", "c" color, text) 
@@ -151,18 +150,17 @@ ShowPopup(text, color:="FAE492", background:="2f4858", time:=3000) {
 
    
     ; Destroy Popup with a Click
-    ; FIXME
     WM_LBUTTONDOWN := 0x0201
-        ; handler := (wParam, lParam, msg, hwnd) => (hwnd = Popup.Hwnd ? (Popup.Destroy(), 0) : 0)
+    
     handler(wParam, lParam, msg, hwnd) {
         try {
             if hwnd = Popup.Hwnd {
-                WinKill("ahk_class AutoHotkeyGUI")
+                Popup.Destroy()
+                OnMessage(WM_LBUTTONDOWN, handler, 0) ; Handler wieder entfernen
             }
         } catch {
             ; Fenster existiert nicht mehr, nichts tun
-            ToolTip("Popup closes soon")
-            SetTimer () => ToolTip(), -1500
+            OnMessage(WM_LBUTTONDOWN, handler, 0)
         }
         return 0
     }
@@ -302,44 +300,6 @@ if !FileExist(configFile) {
     } else {
         MsgBox("git clone failed. Exit code: " exitCode)
     }
-}
-
-; Google Mouse Translation
-!5:: {
-    selectedText := GetSelectedText()
-    if !selectedText {
-        ToolTip "No text selected."
-        SetTimer () => ToolTip(), -3000
-        return
-    }
-
-    url := "https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q=" . selectedText
-
-    Http := ComObject("WinHttp.WinHttpRequest.5.1")
-    Http.Open("GET", url, false)
-    Http.Send()
-    if Http.Status = 200 {
-        response := Http.ResponseText
-        ; The response from Google Translate API is JSON-like
-        ; Example: [[[["Hello","Hola",,,1]],,"es",,,,]]
-        ; You might want to parse it properly or just extract the first translation:
-        translation := RegExReplace(response, '^\[\[\[\s*"([^"]+)".*$', "$1")
-        Send translation
-    } else {
-        ToolTip "HTTP request failed. Status: " Http.Status
-    }
-
-}
-
-
-GetSelectedText() {
-    oldClipboard := A_Clipboard
-    A_Clipboard := ""  ; Start off empty to allow ClipWait to detect when the text has arrived.
-    Send "^c"
-    ClipWait  
-    SelectedText := A_Clipboard   ; Get the copied text
-    A_Clipboard := oldClipboard
-    return SelectedText
 }
 
 
