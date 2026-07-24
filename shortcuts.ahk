@@ -49,7 +49,6 @@ RegisterHotkeys()
     driveLetter := SubStr(copiedPath, 1, 2)
 */
 
-
 ; MENU
 Tray := A_TrayMenu
 Tray.Delete() ; Vordefinierte Menüpunkte löschen.
@@ -68,36 +67,36 @@ SettingsUI(*) {
     UnregisterHotkeys() ; Disable hotkeys while editing
     MyGui := Gui(, "Settings")
     MyGui.OnEvent("Close", (*) => RegisterHotkeys()) ; Re-enable if closed without saving
-    
+
     MyGui.BackColor := "White"
     MyGui.SetFont("s10", "Segoe UI")
 
     MyGui.Add("Text", "w400 x20 y20", "Shortcuts - Settings:")
-    
+
     MyGui.Add("Text", "x20 y+15 w200", "Open VsCode Workspace:")
     MyGui.Add("Hotkey", "x+10 yp-3 w120 vHK_CodeWorkspace", HK_CodeWorkspace)
-    
+
     MyGui.Add("Text", "x20 y+15 w200", "Open VsCode in Ordner:")
     MyGui.Add("Hotkey", "x+10 yp-3 w120 vHK_CodeFolder", HK_CodeFolder)
-    
+
     MyGui.Add("Text", "x20 y+15 w200", "Open NeoVim in Ordner:")
     MyGui.Add("Hotkey", "x+10 yp-3 w120 vHK_NeoVimFolder", HK_NeoVimFolder)
-    
+
     MyGui.Add("Text", "x20 y+15 w200", "git clone from Clipboard:")
     MyGui.Add("Hotkey", "x+10 yp-3 w120 vHK_GitClone", HK_GitClone)
-    
+
     MyGui.Add("Text", "x20 y+15 w200", "Websearch selected Text:")
     MyGui.Add("Hotkey", "x+10 yp-3 w120 vHK_WebSearch", HK_WebSearch)
-    
+
     MyGui.Add("Text", "x20 y+15 w200", "AutoLogin on Website:")
     MyGui.Add("Hotkey", "x+10 yp-3 w120 vHK_AutoLogin", HK_AutoLogin)
-    
+
     MyGui.Add("Text", "x20 y+15 w200", "Mouse Detection Toggle:")
     MyGui.Add("Hotkey", "x+10 yp-3 w120 vHK_MouseDetection", HK_MouseDetection)
-    
+
     MyGui.Add("Text", "x20 y+15 w200", "Keep Alive Toggle:")
     MyGui.Add("Hotkey", "x+10 yp-3 w120 vHK_KeepAlive", HK_KeepAlive)
-    
+
     MyGui.SetFont("s9 cGray")
     MyGui.Add("Text", "x20 y+15 w200 Center", "<To Disable Press 'Space'>")
     MyGui.SetFont("s10 cDefault")
@@ -115,7 +114,6 @@ SettingsUI(*) {
         opt .= " Checked"
 
     chkAutostart := MyGui.Add("CheckBox", opt " vChk_Autostart", " Enable Autostart on Boot")
-
 
     MyBtnSave := MyGui.Add("Button", "w100 x110 y+30 Default", "Save")
     MyBtnSave.OnEvent("Click", SaveShortcuts)
@@ -188,7 +186,7 @@ ResetHotkeys(*) {
 
     ; Re-register the defaults
     RegisterHotkeys()
-    
+
     ShowPopup("Hotkeys reset to default", "001d2b", "039590", 1500)
 }
 
@@ -198,18 +196,17 @@ CKA(*) {
     else
         TrayTip "Shortcuts", "Keep Alive is not active", "Iconx Mute"
 }
-ToggleAutoServerStart(*){
-    if !FileExist(configFile) 
-        || !(AutoStartServer := IniRead(configFile, "Startup", "AutoServerStart", ""))
-        ||  (AutoStartServer := IniRead(configFile, "Startup", "AutoServerStart", "")) == false
-    {
+ToggleAutoServerStart(*) {
+    if !FileExist(configFile)
+    || !(AutoStartServer := IniRead(configFile, "Startup", "AutoServerStart", ""))
+    || (AutoStartServer := IniRead(configFile, "Startup", "AutoServerStart", "")) == false {
         IniWrite true, configFile, "Startup", "AutoServerStart"
     } else {
         IniWrite false, configFile, "Startup", "AutoServerStart"
     }
 }
 
-ChangeCredentials(*){
+ChangeCredentials(*) {
     url := InputBox("Browser URL eingeben:", "url").Value
     username := InputBox("Benutzername eingeben:", "Login").Value
     password := InputBox("Passwort eingeben:", "Login", "Password").Value ; Passwort-Eingabe maskiert
@@ -221,9 +218,7 @@ ChangeCredentials(*){
 
 }
 
-
-
-ToggleStartup(*){
+ToggleStartup(*) {
     nameNoExt := ""
 
     SplitPath A_ScriptName, , , , &nameNoExt
@@ -232,7 +227,7 @@ ToggleStartup(*){
         ; Wenn schon im Autostart, dann entfernen
         FileDelete(targetPath)
         IniWrite false, configFile, "Startup", "AutoStart"
-        ; TrayTip "Shortcuts", "Autostart deaktiviert", "IconX Mute" 
+        ; TrayTip "Shortcuts", "Autostart deaktiviert", "IconX Mute"
         ShowPopup("Autostart deaktiviert")
     } else {
         ; Wenn noch nicht im Autostart, dann kopieren
@@ -247,11 +242,11 @@ ToggleStartup(*){
     }
 
 }
-QuitApp(*){
+QuitApp(*) {
     ExitApp()
 }
 
-ShowPopup(text, color:="FAE492", background:="2f4858", time:=3000) { 
+ShowPopup(text, color := "FAE492", background := "2f4858", time := 3000) {
     if WinExist("ShortcutsPopup ahk_class AutoHotkeyGUI") {
         ; bestehendes Popup zerstören
         WinKill("ShortcutsPopup ahk_class AutoHotkeyGUI")
@@ -260,32 +255,29 @@ ShowPopup(text, color:="FAE492", background:="2f4858", time:=3000) {
     Popup := Gui("-Caption", "ShortcutsPopup")
     Popup.Opt("+AlwaysOnTop -Caption +ToolWindow +E0x08000000")
     Popup.SetFont("s15 w600", "Candara Code") ; Schriftgröße dicke , Font
-    Popup.Add("Text", "c" color, text) 
+    Popup.Add("Text", "c" color, text)
     Popup.BackColor := background
 
     ;! Popup.Show("NA AutoSize x0 y0")
     Popup.Show("NA AutoSize xCenter yCenter")
-    Popup.GetPos(,, &w, &h)
+    Popup.GetPos(, , &w, &h)
     MonitorGetWorkArea(MonitorGetPrimary(), &L, &T, &R, &B)
-    
 
     ; Move to bottom-right corner
     newX := R - w - 10  ; 10px margin from edge
     newY := B - h - 10
     ;! Popup.Move(newX, newY)
 
-
     ; custom Window mit Abgerundete Ecken
     Popup.GetPos(&x, &y, &w, &h)
     radius := 35  ; Radius in Pixeln
-    region := DllCall("CreateRoundRectRgn", "Int", 0, "Int", 0, "Int", w, "Int", h, "Int", radius, "Int", radius, "Ptr")
+    region := DllCall("CreateRoundRectRgn", "Int", 0, "Int", 0, "Int", w, "Int", h, "Int", radius, "Int", radius, "Ptr"
+    )
     DllCall("SetWindowRgn", "Ptr", Popup.Hwnd, "Ptr", region, "Int", true)
 
-
-   
     ; Destroy Popup with a Click
     WM_LBUTTONDOWN := 0x0201
-    
+
     handler(wParam, lParam, msg, hwnd) {
         try {
             if hwnd = Popup.Hwnd {
@@ -304,7 +296,7 @@ ShowPopup(text, color:="FAE492", background:="2f4858", time:=3000) {
     try { ;if the Popup wasn't clicked
         SetTimer(() => Popup.Destroy(), -time)
     }
-     
+
 }
 
 ; On StartUp
@@ -315,7 +307,6 @@ if !FileExist(configFile) {
     SplitPath A_ScriptName, , , , &nameNoExt
     targetPath := A_Startup "\" nameNoExt ".lnk"
 
-
     shell := ComObject("WScript.Shell")
     shortcut := shell.CreateShortcut(targetPath)
     shortcut.TargetPath := A_ScriptFullPath
@@ -324,12 +315,12 @@ if !FileExist(configFile) {
     ; TrayTip "Shortcuts", "Autostart aktiviert", "IconI Mute"
     ShowPopup("Autostart aktiviert")
     IniWrite true, configFile, "Startup", "AutoStart"
-    
+
 } else {
-    try{
+    try {
         Startup := IniRead(configFile, "Startup", "AutoStart", "")
         AutoStartServer := IniRead(configFile, "Startup", "AutoStartServer", "")
-        
+
         ; wird getoggelt, wenn: 0 und StartupFile da || 1 und StartupFile nicht da
         nameNoExt := ""
         SplitPath A_ScriptName, , , , &nameNoExt
@@ -350,8 +341,6 @@ if !FileExist(configFile) {
 
     }
 }
-
-
 
 Action_CodeWorkspace(ThisHotkey) { ;Open VsCode for this folder
     Run "C:\WINDOWS\system32\cmd.exe"
@@ -413,7 +402,6 @@ Action_NeoVimFolder(ThisHotkey) { ;Open NeoVim in Ordner
             WinActivate
 
             Send "nvim `"" A_Clipboard "`"{Enter}"
-            
 
         } else {
             MsgBox "couldn't run the Program"
@@ -432,7 +420,6 @@ Action_GitClone(ThisHotkey) { ; git clone from Clipboard —e
     Send "^c"
     Sleep 100
 
-
     cmd := A_ComSpec " /c git clone `"" repo "`""
     exitCode := RunWait(cmd, A_Clipboard, "Hide") ; WorkingDir gesetzt
 
@@ -443,16 +430,13 @@ Action_GitClone(ThisHotkey) { ; git clone from Clipboard —e
     }
 }
 
-
 ; Sebsearch with selected Text
 Action_WebSearch(ThisHotkey) {
-   selectedText := GetSelectedText()
+    selectedText := GetSelectedText()
     if (selectedText)
         Run("https://www.google.com/search?q=" . selectedText)
 
 }
-
-
 
 ; AutoLogin on Website
 ServerTimerRunning := false
@@ -460,13 +444,11 @@ Action_AutoLogin(ThisHotkey) {
     global ServerTimerRunning
     ServerTimerRunning := !ServerTimerRunning
 
-
     ; get server
-    if !FileExist(configFile) 
-        || !(url := IniRead(configFile, "AutoServerStart", "url", "")) 
-        || !(username := IniRead(configFile, "AutoServerStart", "Username", "")) 
-        || !(password := IniRead(configFile, "AutoServerStart", "Password", "")) 
-    {
+    if !FileExist(configFile)
+    || !(url := IniRead(configFile, "AutoServerStart", "url", ""))
+    || !(username := IniRead(configFile, "AutoServerStart", "Username", ""))
+    || !(password := IniRead(configFile, "AutoServerStart", "Password", "")) {
         url := InputBox("Browser URL eingeben:", "url").Value
         username := InputBox("Benutzername eingeben:", "Login").Value
         password := InputBox("Passwort eingeben:", "Login", "Password").Value ; Passwort-Eingabe maskiert
@@ -489,24 +471,18 @@ Action_AutoLogin(ThisHotkey) {
         ServerTimerRunning := false
     }
 
-
     if (ServerTimerRunning) {
         SetTimer(CheckServer(url, server, username, password), 3000)
         ; More Beautiful
         TraySetIcon ".\images\lens.ico", , 1
         A_IconTip := "Lens Search"
     } else {
-        SetTimer(CheckServer(url,server, username, password), 0)
+        SetTimer(CheckServer(url, server, username, password), 0)
         TraySetIcon ".\images\rocket.ico", , 1
-        A_IconTip := "Shortcuts" 
+        A_IconTip := "Shortcuts"
     }
-    
-    
 
 }
-
-
-
 
 ; Setting for Mouse Detection
 LockTimerRunning := false
@@ -531,9 +507,6 @@ Action_MouseDetection(ThisHotkey) {
     }
 }
 
-
-
-
 TimerRunning := false
 
 Action_KeepAlive(ThisHotkey) { ; Keep Alive
@@ -542,23 +515,22 @@ Action_KeepAlive(ThisHotkey) { ; Keep Alive
     TimerRunning := !TimerRunning  ; Toggle Zustand
 
     if (TimerRunning) {
-        TraySetIcon ".\images\favicon.ico", , 
-        A_IconTip := ""
+        TraySetIcon ".\images\favicon.ico", ,
+            A_IconTip := ""
         SetTimer PressNumLock, 180000  ; 180.000 ms = 3 Minuten
         ; TrayTip "Shortcuts", "Keep Alive started", "Iconi Mute"
         ShowPopup("Keep Alive started", "001d2b", "039590", 1000)
         ; SetTimer () => TrayTip(), -3000  ; TrayTip nach 3 Sekunde ausblenden
     } else {
         TraySetIcon ".\images\rocket.ico", , 1
-        A_IconTip := "Shortcuts" 
-        SetTimer PressNumLock, 0  ; Timer stoppen 
+        A_IconTip := "Shortcuts"
+        SetTimer PressNumLock, 0  ; Timer stoppen
         ; TrayTip "Shortcuts", "Keep Alive stopped", "Iconx Mute"
         ; SetTimer () => TrayTip(), -1000
         ShowPopup("Keep Alive stopped", "001d2b", "be5845", 1000)
     }
 
 }
-
 
 GetSelectedText() {
     ClipSaved := ClipboardAll()
@@ -572,7 +544,7 @@ GetSelectedText() {
 ;Funktion for AutoServer Start
 CheckServer(url, server, username, password) {
     global ServerTimerRunning
-     exitCode := RunWait(A_ComSpec " /c ping -n 1 " server " >nul", , "Hide")
+    exitCode := RunWait(A_ComSpec " /c ping -n 1 " server " >nul", , "Hide")
 
     if (exitCode = 0) {
         ; Server erreichbar
@@ -584,45 +556,40 @@ CheckServer(url, server, username, password) {
         Send A_Tab      ; Zum Passwortfeld springen
         Send password   ; Passwort eingeben
         Send "{Enter}"  ; Formular absenden
-        
+
         Sleep 1000
 
         ; TODO for later
-/*             #Include lib\WebScrapping.ahk ; for DOM
-        scraper := WebScrapping()
-
-        scraper := WebScrapping("C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe")
-        Sleep(1000)
-
-        scraper.SetPageByURL(server)
-
-        winTitle := WinGetTitle("A")
-        MsgBox "Aktives Fenster: " winTitle
-
-        Loop {
-            el := scraper.GetElement("document.querySelector('.storeapp-list')")
-            if (el) {
-                MsgBox "Login erfolgreich, storeapp-list gefunden!"
-                break
-            }
-            Sleep 500
-        }
-*/
-
-
-        SetTimer(CheckServer(url,server, username, password), 0)
+        /*             #Include lib\WebScrapping.ahk ; for DOM
+                scraper := WebScrapping()
         
+                scraper := WebScrapping("C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe")
+                Sleep(1000)
+        
+                scraper.SetPageByURL(server)
+        
+                winTitle := WinGetTitle("A")
+                MsgBox "Aktives Fenster: " winTitle
+        
+                Loop {
+                    el := scraper.GetElement("document.querySelector('.storeapp-list')")
+                    if (el) {
+                        MsgBox "Login erfolgreich, storeapp-list gefunden!"
+                        break
+                    }
+                    Sleep 500
+                }
+        */
+
+        SetTimer(CheckServer(url, server, username, password), 0)
+
     } else {
         ; TrayTip "Lens Search", "keine Verbindung", "Icon! Mute"
         ToolTip "searching"
         SetTimer () => TrayTip(), -1000
-    
 
         Sleep(2000)
     }
-        
-    
-
 
 }
 
@@ -631,9 +598,9 @@ CheckMouseMove() {
     global lastX, lastY, LockTimerRunning
     MouseGetPos(&x, &y)
     if (x != lastX || y != lastY) {
-        TrayTip "Shortcuts", "Bewegung erkannt", "Icon! Mute" 
+        TrayTip "Shortcuts", "Bewegung erkannt", "Icon! Mute"
         ; Sleep(500) ; 0.5 sek Pause, um ToolTip zu sehen
-        
+
         ; deactivate the program
         LockTimerRunning := !LockTimerRunning
         SetTimer(CheckMouseMove, 0)
@@ -641,8 +608,6 @@ CheckMouseMove() {
         DllCall("user32\LockWorkStation") ; call API for Locking windows
     }
 }
-
-
 
 PressNumLock() {
     Key := Random(1, 4)
