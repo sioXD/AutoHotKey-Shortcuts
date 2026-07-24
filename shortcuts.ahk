@@ -626,9 +626,11 @@ PressNumLock() {
     }
 
     Sleep Random(10, 60000) ; Kurze Verzögerung (10ms - 1min)
-    Send Key   ; 1. Drücken
-    Sleep Random(10, 50) ; Kurze Verzögerung (10ms - 50ms)
-    Send Key   ; 2. Drücken
+    MouseMove Random(-3, 3), Random(-3, 3), 0, "R"
+    Send Key ; 1. Drücken
+    Sleep Random(10, 50)
+    MouseMove Random(-3, 3), Random(-3, 3), 0, "R"
+    Send Key ; 2. Drücken
     ; ToolTip Key
     ; SetTimer () => ToolTip(), -1000 ; Tooltip nach 1 Sekunde ausblenden
 }
